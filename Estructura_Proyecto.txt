@@ -1,0 +1,70 @@
+# File Tree: proyecto_transportes
+
+
+├── config
+│   ├── __init__.py
+│   ├── database.py
+│   └── settings.py
+├── core
+│   ├── __init__.py
+│   ├── db_manager.py
+│   ├── exceptions.py
+│   ├── helpers.py
+│   └── logger.py
+├── doc
+│   ├── Proyecto 1 Modelo Relacional.pdf
+│   └── SGRV.drawio.png
+├── models
+│   └── __init__.py
+├── repositories
+│   ├── __init__.py
+│   ├── autobus_repository.py
+│   ├── cliente_repository.py
+│   ├── dashboard_repository.py
+│   ├── empleado_repository.py
+│   ├── factura_repository.py
+│   ├── pago_repository.py
+│   ├── reservacion_repository.py
+│   └── viaje_repository.py
+├── services
+│   ├── __init__.py
+│   ├── autobus_service.py
+│   ├── cliente_service.py
+│   ├── dashboard_service.py
+│   ├── empleado_service.py
+│   ├── factura_service.py
+│   ├── pago_service.py
+│   ├── reservacion_service.py
+│   └── viaje_service.py
+├── sql
+│   ├── 01_db_completa.sql
+│   ├── 02_datos_prueba.sql
+│   └── 03_cambio_tablas.sql
+├── ui
+│   ├── components
+│   │   ├── __init__.py
+│   │   ├── content_frame.py
+│   │   ├── custom_widgets.py
+│   │   ├── header.py
+│   │   └── sidebar.py
+│   ├── styles
+│   │   ├── __init__.py
+│   │   └── theme.py
+│   ├── views
+│   │   ├── __init__.py
+│   │   ├── autobuses_view.py
+│   │   ├── clientes_view.py
+│   │   ├── dashboard_view.py
+│   │   ├── empleados_view.py
+│   │   ├── facturas_view.py
+│   │   ├── pagos_view.py
+│   │   ├── reservaciones_view.py
+│   │   └── viajes_view.py
+│   ├── __init__.py
+│   └── main_window.py
+├── .gitignore
+├── Estructura_Proyecto.txt
+├── README.md
+├── app.py
+└── requirements.txt
+

@@ -64,6 +64,27 @@ class PagoRepository:
         result = self.db.execute(query, fetch_one=True)
         return int(result[0]) if result else 1
 
+    def obtener_ultimo_numero_referencia_por_prefijo(self, prefijo: str) -> int:
+        """
+        Obtiene el último consecutivo usado para referencias con un prefijo dado.
+        Ejemplos:
+        - REF-TARJ-
+        - REF-EFEC-
+        - REF-TRANS-
+        """
+        query = """
+        SELECT ISNULL(MAX(CAST(RIGHT(referencia_pago, 4) AS INT)), 0) AS ultimo
+        FROM PAGOS
+        WHERE referencia_pago LIKE ?;
+        """
+        result = self.db.execute(query, (f"{prefijo}%",), fetch_one=True)
+
+        if not result:
+            return 0
+
+        ultimo = result[0] if not hasattr(result, "ultimo") else result.ultimo
+        return int(ultimo or 0)
+
     def insertar_pago(
         self,
         id_pago: int,

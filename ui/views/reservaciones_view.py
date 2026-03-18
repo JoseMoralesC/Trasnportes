@@ -1,5 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+from datetime import date
+from tkcalendar import DateEntry
 
 from core.logger import get_logger
 from services.reservacion_service import ReservacionService
@@ -75,10 +77,14 @@ class ReservacionesView(ttk.Frame):
         self.combo_estado.grid(row=2, column=3, sticky="ew", padx=(8, 0), pady=(0, 8))
 
         # Fila 2
-        ttk.Label(form_card, text="Fecha reservación (YYYY-MM-DD)").grid(
+        ttk.Label(form_card, text="Fecha reservación").grid(
             row=3, column=0, sticky="w", padx=(0, 8), pady=6
         )
-        self.entry_fecha_reservacion = ttk.Entry(form_card)
+        self.entry_fecha_reservacion = DateEntry(
+            form_card,
+            date_pattern="yyyy-mm-dd",
+            state="readonly"
+        )
         self.entry_fecha_reservacion.grid(row=4, column=0, sticky="ew", padx=(0, 8), pady=(0, 8))
 
         ttk.Label(form_card, text="Cantidad pasajeros").grid(
@@ -367,8 +373,7 @@ class ReservacionesView(ttk.Frame):
 
             self.selected_reservacion_id = reservacion.id_reservacion
 
-            self.entry_fecha_reservacion.delete(0, tk.END)
-            self.entry_fecha_reservacion.insert(0, str(reservacion.fecha_reservacion))
+            self.entry_fecha_reservacion.set_date(str(reservacion.fecha_reservacion))
 
             self.entry_cantidad_pasajeros.delete(0, tk.END)
             self.entry_cantidad_pasajeros.insert(0, str(reservacion.cantidad_pasajeros))
@@ -438,7 +443,7 @@ class ReservacionesView(ttk.Frame):
         self.combo_empleado.set("")
         self.combo_estado.set("")
 
-        self.entry_fecha_reservacion.delete(0, tk.END)
+        self.entry_fecha_reservacion.set_date(date.today())
         self.entry_cantidad_pasajeros.delete(0, tk.END)
 
         self._set_readonly_entry(self.entry_subtotal, "")

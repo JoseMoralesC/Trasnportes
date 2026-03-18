@@ -39,6 +39,77 @@ class PagoService:
         return self.repository.obtener_siguiente_id()
 
     # =========================================================
+    # HELPERS
+    # =========================================================
+    def obtener_total_factura(self, id_factura: int) -> float:
+        if id_factura <= 0:
+            raise ValueError("La factura seleccionada no es válida.")
+
+        row = self.repository.obtener_total_factura(id_factura)
+        if not row:
+            raise ValueError("No se encontró el total de la factura seleccionada.")
+
+        return float(row.total)
+
+    def obtener_prefijo_referencia(self, metodo_pago: str) -> str:
+        """
+        Devuelve el prefijo correspondiente según el método de pago.
+        """
+        metodo_normalizado = (metodo_pago or "").strip().lower()
+
+        mapa_prefijos = {
+            "tarjeta": "REF-TARJ-",
+            "efectivo": "REF-EFEC-",
+            "transferencia": "REF-TRANS-",
+        }
+
+        prefijo = mapa_prefijos.get(metodo_normalizado)
+        if not prefijo:
+            raise ValueError("No se pudo determinar el prefijo para el método de pago seleccionado.")
+
+        return prefijo
+
+    def obtener_nombre_metodo_pago(self, id_metodo_pago: int) -> str:
+        """
+        Busca el nombre del método de pago a partir del id.
+        """
+        if id_metodo_pago <= 0:
+            raise ValueError("El método de pago es inválido.")
+
+        metodos = self.listar_metodos_pago()
+        for metodo in metodos:
+            if int(metodo.id_metodo_pago) == int(id_metodo_pago):
+                return str(metodo.nombre_metodo).strip()
+
+        raise ValueError("No se encontró el método de pago seleccionado.")
+
+    def generar_referencia_pago(self, id_metodo_pago: int) -> str:
+        """
+        Genera una nueva referencia automática según el método de pago:
+        - Tarjeta       -> REF-TARJ-0001
+        - Efectivo      -> REF-EFEC-0001
+        - Transferencia -> REF-TRANS-0001
+        """
+        nombre_metodo = self.obtener_nombre_metodo_pago(id_metodo_pago)
+        prefijo = self.obtener_prefijo_referencia(nombre_metodo)
+
+        ultimo_numero = self.repository.obtener_ultimo_numero_referencia_por_prefijo(prefijo)
+        siguiente_numero = ultimo_numero + 1
+
+        return f"{prefijo}{siguiente_numero:04d}"
+
+    def referencia_corresponde_a_metodo(self, id_metodo_pago: int, referencia_pago: str) -> bool:
+        """
+        Valida que la referencia coincida con el prefijo esperado
+        según el método de pago.
+        """
+        nombre_metodo = self.obtener_nombre_metodo_pago(id_metodo_pago)
+        prefijo = self.obtener_prefijo_referencia(nombre_metodo)
+        referencia_normalizada = (referencia_pago or "").strip().upper()
+
+        return referencia_normalizada.startswith(prefijo)
+
+    # =========================================================
     # VALIDACIONES
     # =========================================================
     def validar_datos(
@@ -51,7 +122,7 @@ class PagoService:
         id_estado: int,
     ) -> None:
         fecha_pago = fecha_pago.strip()
-        referencia_pago = referencia_pago.strip()
+        referencia_pago = referencia_pago.strip().upper()
 
         if id_factura <= 0:
             raise ValueError("Debe seleccionar una factura válida.")
@@ -73,21 +144,11 @@ class PagoService:
         if not referencia_pago:
             raise ValueError("La referencia de pago es obligatoria.")
 
+        if not self.referencia_corresponde_a_metodo(id_metodo_pago, referencia_pago):
+            raise ValueError("La referencia de pago no corresponde al método de pago seleccionado.")
+
         if id_estado <= 0:
             raise ValueError("Debe seleccionar un estado válido.")
-
-    # =========================================================
-    # HELPERS
-    # =========================================================
-    def obtener_total_factura(self, id_factura: int) -> float:
-        if id_factura <= 0:
-            raise ValueError("La factura seleccionada no es válida.")
-
-        row = self.repository.obtener_total_factura(id_factura)
-        if not row:
-            raise ValueError("No se encontró el total de la factura seleccionada.")
-
-        return float(row.total)
 
     # =========================================================
     # OPERACIONES
@@ -101,7 +162,7 @@ class PagoService:
         referencia_pago: str,
         id_estado: int,
     ) -> int:
-        
+
         total_factura = self.obtener_total_factura(id_factura)
 
         if monto_pagado > total_factura:
@@ -150,6 +211,14 @@ class PagoService:
         if id_pago <= 0:
             raise ValueError("El id del pago es inválido.")
 
+        pago_actual = self.repository.obtener_pago_por_id(id_pago)
+        if not pago_actual:
+            raise ValueError("El pago que intenta actualizar no existe.")
+
+        total_factura = self.obtener_total_factura(id_factura)
+        if monto_pagado > total_factura:
+            raise ValueError("El monto pagado no puede ser mayor al total de la factura.")
+
         self.validar_datos(
             id_factura=id_factura,
             id_metodo_pago=id_metodo_pago,
@@ -159,15 +228,11 @@ class PagoService:
             id_estado=id_estado,
         )
 
-        pago_actual = self.repository.obtener_pago_por_id(id_pago)
-        if not pago_actual:
-            raise ValueError("El pago que intenta actualizar no existe.")
-
         referencia_pago = referencia_pago.strip().upper()
         fecha_pago = fecha_pago.strip()
 
         if (
-            referencia_pago != pago_actual.referencia_pago
+            referencia_pago != str(pago_actual.referencia_pago).strip().upper()
             and self.repository.existe_referencia_pago(referencia_pago)
         ):
             raise ValueError("Ya existe otro pago registrado con esa referencia.")

@@ -69,7 +69,8 @@ GO
 INSERT INTO MARCA_UNIDAD (id_marca, marca) VALUES
 (1, 'Mercedes'),
 (2, 'Hyundai'),
-(3, 'Volvo');
+(3, 'Volvo'),
+(4, 'Scania');
 GO
 
 INSERT INTO MODELO_UNIDAD (id_modelo, modelo) VALUES

@@ -1,5 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+from datetime import date
+from tkcalendar import DateEntry
 
 from core.logger import get_logger
 from services.viaje_service import ViajeService
@@ -71,17 +73,43 @@ class ViajesView(ttk.Frame):
         self.combo_estado.grid(row=2, column=3, sticky="ew", padx=(8, 0), pady=(0, 8))
 
         # Fila 2
-        ttk.Label(form_card, text="Fecha salida (YYYY-MM-DD)").grid(
+        ttk.Label(form_card, text="Fecha salida").grid(
             row=3, column=0, sticky="w", padx=(0, 8), pady=6
         )
-        self.entry_fecha_salida = ttk.Entry(form_card)
+        self.entry_fecha_salida = DateEntry(
+            form_card,
+            date_pattern="yyyy-mm-dd",
+            state="readonly"
+        )
         self.entry_fecha_salida.grid(row=4, column=0, sticky="ew", padx=(0, 8), pady=(0, 8))
 
-        ttk.Label(form_card, text="Hora salida (HH:MM)").grid(
+        ttk.Label(form_card, text="Hora salida").grid(
             row=3, column=1, sticky="w", padx=8, pady=6
         )
-        self.entry_hora_salida = ttk.Entry(form_card)
-        self.entry_hora_salida.grid(row=4, column=1, sticky="ew", padx=8, pady=(0, 8))
+
+        self.combo_hora_salida = ttk.Combobox(form_card, state="readonly")
+        self.combo_hora_salida.grid(row=4, column=1, sticky="ew", padx=8, pady=(0, 8))
+
+        self.combo_hora_salida["values"] = [
+            "05:00", "05:30",
+            "06:00", "06:30",
+            "07:00", "07:30",
+            "08:00", "08:30",
+            "09:00", "09:30",
+            "10:00", "10:30",
+            "11:00", "11:30",
+            "12:00", "12:30",
+            "13:00", "13:30",
+            "14:00", "14:30",
+            "15:00", "15:30",
+            "16:00", "16:30",
+            "17:00", "17:30",
+            "18:00", "18:30",
+            "19:00", "19:30",
+            "20:00", "20:30",
+            "21:00", "21:30",
+            "22:00"
+        ]
 
         ttk.Label(form_card, text="Cupo total").grid(row=3, column=2, sticky="w", padx=8, pady=6)
         self.entry_cupo_total = ttk.Entry(form_card)
@@ -240,7 +268,7 @@ class ViajesView(ttk.Frame):
                 id_ruta=id_ruta,
                 id_autobus=id_autobus,
                 fecha_salida=self.entry_fecha_salida.get(),
-                hora_salida=self.entry_hora_salida.get(),
+                hora_salida=self.combo_hora_salida.get(),
                 id_precio=id_precio,
                 cupo_total=cupo_total,
                 id_estado=id_estado,
@@ -281,7 +309,7 @@ class ViajesView(ttk.Frame):
                 id_ruta=id_ruta,
                 id_autobus=id_autobus,
                 fecha_salida=self.entry_fecha_salida.get(),
-                hora_salida=self.entry_hora_salida.get(),
+                hora_salida=self.combo_hora_salida.get(),
                 id_precio=id_precio,
                 cupo_total=cupo_total,
                 id_estado=id_estado,
@@ -340,11 +368,9 @@ class ViajesView(ttk.Frame):
 
             self.selected_viaje_id = viaje.id_viaje
 
-            self.entry_fecha_salida.delete(0, tk.END)
-            self.entry_fecha_salida.insert(0, str(viaje.fecha_salida))
+            self.entry_fecha_salida.set_date(str(viaje.fecha_salida))
 
-            self.entry_hora_salida.delete(0, tk.END)
-            self.entry_hora_salida.insert(0, str(viaje.hora_salida)[:5])
+            self.combo_hora_salida.set(str(viaje.hora_salida)[:5])
 
             self.entry_cupo_total.delete(0, tk.END)
             self.entry_cupo_total.insert(0, str(viaje.cupo_total))
@@ -369,8 +395,8 @@ class ViajesView(ttk.Frame):
         self.combo_precio.set("")
         self.combo_estado.set("")
 
-        self.entry_fecha_salida.delete(0, tk.END)
-        self.entry_hora_salida.delete(0, tk.END)
+        self.entry_fecha_salida.set_date(date.today())
+        self.combo_hora_salida.set("")
         self.entry_cupo_total.delete(0, tk.END)
 
         for item in self.tree.selection():

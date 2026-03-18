@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 
 from core.logger import get_logger
+from tkcalendar import DateEntry
+from datetime import date
 from services.empleado_service import EmpleadoService
 
 
@@ -77,10 +79,15 @@ class EmpleadosView(ttk.Frame):
         self.entry_correo = ttk.Entry(form_card)
         self.entry_correo.grid(row=4, column=1, sticky="ew", padx=8, pady=(0, 8))
 
-        ttk.Label(form_card, text="Fecha ingreso (YYYY-MM-DD)").grid(
+        ttk.Label(form_card, text="Fecha ingreso").grid(
             row=3, column=2, sticky="w", padx=8, pady=6
         )
-        self.entry_fecha_ingreso = ttk.Entry(form_card)
+
+        self.entry_fecha_ingreso = DateEntry(
+            form_card,
+            date_pattern="yyyy-mm-dd",
+            state="readonly"
+        )
         self.entry_fecha_ingreso.grid(row=4, column=2, sticky="ew", padx=8, pady=(0, 8))
 
         ttk.Label(form_card, text="Rol").grid(row=3, column=3, sticky="w", padx=(8, 0), pady=6)
@@ -346,8 +353,7 @@ class EmpleadosView(ttk.Frame):
             self.entry_correo.delete(0, tk.END)
             self.entry_correo.insert(0, empleado.correo)
 
-            self.entry_fecha_ingreso.delete(0, tk.END)
-            self.entry_fecha_ingreso.insert(0, str(empleado.fecha_ingreso))
+            self.entry_fecha_ingreso.set_date(str(empleado.fecha_ingreso))
 
             self._set_combo_by_id(self.combo_rol, self.roles_map, empleado.id_rol)
             self._set_combo_by_id(self.combo_licencia, self.licencias_map, empleado.id_licencia)
@@ -368,7 +374,7 @@ class EmpleadosView(ttk.Frame):
         self.entry_apellido2.delete(0, tk.END)
         self.entry_telefono.delete(0, tk.END)
         self.entry_correo.delete(0, tk.END)
-        self.entry_fecha_ingreso.delete(0, tk.END)
+        self.entry_fecha_ingreso.set_date(date.today())
 
         self.combo_rol.set("")
         self.combo_licencia.set("")

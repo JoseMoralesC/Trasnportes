@@ -1,7 +1,9 @@
 import tkinter as tk
+from datetime import date
 from tkinter import ttk, messagebox
 
 from core.logger import get_logger
+from tkcalendar import DateEntry
 from services.pago_service import PagoService
 
 
@@ -54,35 +56,52 @@ class PagosView(ttk.Frame):
         )
 
         # Fila 1
-        ttk.Label(form_card, text="Factura").grid(row=1, column=0, sticky="w", padx=(0, 8), pady=6)
+        ttk.Label(form_card, text="Factura").grid(
+            row=1, column=0, sticky="w", padx=(0, 8), pady=6
+        )
         self.combo_factura = ttk.Combobox(form_card, state="readonly")
         self.combo_factura.grid(row=2, column=0, sticky="ew", padx=(0, 8), pady=(0, 8))
         self.combo_factura.bind("<<ComboboxSelected>>", self._on_factura_change)
 
-        ttk.Label(form_card, text="Método de pago").grid(row=1, column=1, sticky="w", padx=8, pady=6)
+        ttk.Label(form_card, text="Método de pago").grid(
+            row=1, column=1, sticky="w", padx=8, pady=6
+        )
         self.combo_metodo = ttk.Combobox(form_card, state="readonly")
         self.combo_metodo.grid(row=2, column=1, sticky="ew", padx=8, pady=(0, 8))
+        self.combo_metodo.bind("<<ComboboxSelected>>", self._on_metodo_change)
 
-        ttk.Label(form_card, text="Estado").grid(row=1, column=2, sticky="w", padx=8, pady=6)
+        ttk.Label(form_card, text="Estado").grid(
+            row=1, column=2, sticky="w", padx=8, pady=6
+        )
         self.combo_estado = ttk.Combobox(form_card, state="readonly")
         self.combo_estado.grid(row=2, column=2, sticky="ew", padx=8, pady=(0, 8))
 
-        ttk.Label(form_card, text="Fecha pago (YYYY-MM-DD)").grid(
+        ttk.Label(form_card, text="Fecha pago").grid(
             row=1, column=3, sticky="w", padx=(8, 0), pady=6
         )
-        self.entry_fecha_pago = ttk.Entry(form_card)
+        self.entry_fecha_pago = DateEntry(
+            form_card,
+            date_pattern="yyyy-mm-dd",
+            state="readonly"
+        )
         self.entry_fecha_pago.grid(row=2, column=3, sticky="ew", padx=(8, 0), pady=(0, 8))
 
         # Fila 2
-        ttk.Label(form_card, text="Monto pagado").grid(row=3, column=0, sticky="w", padx=(0, 8), pady=6)
+        ttk.Label(form_card, text="Monto pagado").grid(
+            row=3, column=0, sticky="w", padx=(0, 8), pady=6
+        )
         self.entry_monto_pagado = ttk.Entry(form_card)
         self.entry_monto_pagado.grid(row=4, column=0, sticky="ew", padx=(0, 8), pady=(0, 8))
 
-        ttk.Label(form_card, text="Referencia pago").grid(row=3, column=1, sticky="w", padx=8, pady=6)
-        self.entry_referencia_pago = ttk.Entry(form_card)
+        ttk.Label(form_card, text="Referencia pago").grid(
+            row=3, column=1, sticky="w", padx=8, pady=6
+        )
+        self.entry_referencia_pago = ttk.Entry(form_card, state="readonly")
         self.entry_referencia_pago.grid(row=4, column=1, sticky="ew", padx=8, pady=(0, 8))
 
-        ttk.Label(form_card, text="Total factura").grid(row=3, column=2, sticky="w", padx=8, pady=6)
+        ttk.Label(form_card, text="Total factura").grid(
+            row=3, column=2, sticky="w", padx=8, pady=6
+        )
         self.entry_total_factura = ttk.Entry(form_card, state="readonly")
         self.entry_total_factura.grid(row=4, column=2, sticky="ew", padx=8, pady=(0, 8))
 
@@ -331,19 +350,16 @@ class PagosView(ttk.Frame):
 
             self.selected_pago_id = pago.id_pago
 
-            self.entry_fecha_pago.delete(0, tk.END)
-            self.entry_fecha_pago.insert(0, str(pago.fecha_pago))
-
-            self.entry_monto_pagado.delete(0, tk.END)
-            self.entry_monto_pagado.insert(0, str(pago.monto_pagado))
-
-            self.entry_referencia_pago.delete(0, tk.END)
-            self.entry_referencia_pago.insert(0, pago.referencia_pago)
-
             self._set_combo_by_id(self.combo_factura, self.facturas_map, pago.id_factura)
             self._set_combo_by_id(self.combo_metodo, self.metodos_map, pago.id_metodo_pago)
             self._set_combo_by_id(self.combo_estado, self.estados_map, pago.id_estado)
 
+            self.entry_fecha_pago.set_date(str(pago.fecha_pago))
+
+            self.entry_monto_pagado.delete(0, tk.END)
+            self.entry_monto_pagado.insert(0, str(pago.monto_pagado))
+
+            self._set_readonly_entry(self.entry_referencia_pago, str(pago.referencia_pago))
             self._actualizar_total_factura()
 
         except Exception as e:
@@ -352,6 +368,9 @@ class PagosView(ttk.Frame):
 
     def _on_factura_change(self, event=None) -> None:
         self._actualizar_total_factura()
+
+    def _on_metodo_change(self, event=None) -> None:
+        self._actualizar_referencia_pago()
 
     # =========================================================
     # HELPERS
@@ -370,6 +389,32 @@ class PagosView(ttk.Frame):
         except Exception:
             self._set_readonly_entry(self.entry_total_factura, "")
 
+    def _actualizar_referencia_pago(self) -> None:
+        try:
+            metodo_text = self.combo_metodo.get().strip()
+            if not metodo_text or metodo_text not in self.metodos_map:
+                self._set_readonly_entry(self.entry_referencia_pago, "")
+                return
+
+            id_metodo = self.metodos_map[metodo_text]
+
+            # Si está editando un pago existente, se conserva la referencia actual
+            # siempre que el método no haya cambiado realmente desde la carga.
+            if self.selected_pago_id is not None:
+                pago_actual = self.service.obtener_pago_por_id(self.selected_pago_id)
+                if pago_actual and int(pago_actual.id_metodo_pago) == int(id_metodo):
+                    self._set_readonly_entry(
+                        self.entry_referencia_pago,
+                        str(pago_actual.referencia_pago)
+                    )
+                    return
+
+            referencia = self.service.generar_referencia_pago(id_metodo)
+            self._set_readonly_entry(self.entry_referencia_pago, referencia)
+
+        except Exception:
+            self._set_readonly_entry(self.entry_referencia_pago, "")
+
     def _set_readonly_entry(self, entry: ttk.Entry, value: str) -> None:
         entry.config(state="normal")
         entry.delete(0, tk.END)
@@ -383,10 +428,10 @@ class PagosView(ttk.Frame):
         self.combo_metodo.set("")
         self.combo_estado.set("")
 
-        self.entry_fecha_pago.delete(0, tk.END)
+        self.entry_fecha_pago.set_date(date.today())
         self.entry_monto_pagado.delete(0, tk.END)
-        self.entry_referencia_pago.delete(0, tk.END)
 
+        self._set_readonly_entry(self.entry_referencia_pago, "")
         self._set_readonly_entry(self.entry_total_factura, "")
 
         for item in self.tree.selection():

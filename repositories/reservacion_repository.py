@@ -229,5 +229,5 @@ class ReservacionRepository:
         FROM RESERVACIONES
         WHERE id_viaje = ?;
         """
-        result = self.db.execute(query, (id_viaje,), fecht_one=True)
+        result = self.db.execute(query, (id_viaje,), fetch_one=True)
         return int(result[0]) if result else 0

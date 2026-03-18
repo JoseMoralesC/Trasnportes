@@ -26,9 +26,6 @@ class AutobusService:
             raise ValueError("El id del autobús es inválido.")
         return self.repository.obtener_autobus_por_id(id_autobus)
 
-    def listar_numeros_unidad(self):
-        return self.repository.listar_numeros_unidad()
-
     def listar_marcas(self):
         return self.repository.listar_marcas()
 
@@ -44,13 +41,17 @@ class AutobusService:
     def obtener_siguiente_id(self) -> int:
         return self.repository.obtener_siguiente_id()
 
+    def obtener_siguiente_numero_unidad(self) -> tuple[int, str]:
+        siguiente_id = self.repository.obtener_siguiente_id_num_unidad()
+        unidad = f"U-{siguiente_id:03d}"
+        return siguiente_id, unidad
+
     # =========================================================
     # VALIDACIONES
     # =========================================================
     def validar_datos(
         self,
         placa: str,
-        id_num_unidad: int,
         id_marca: int,
         id_modelo: int,
         anio: int,
@@ -65,9 +66,6 @@ class AutobusService:
 
         if len(placa) < 5:
             raise ValueError("La placa no tiene un formato válido.")
-
-        if id_num_unidad <= 0:
-            raise ValueError("Debe seleccionar un número de unidad válido.")
 
         if id_marca <= 0:
             raise ValueError("Debe seleccionar una marca válida.")
@@ -100,7 +98,6 @@ class AutobusService:
     def crear_autobus(
         self,
         placa: str,
-        id_num_unidad: int,
         id_marca: int,
         id_modelo: int,
         anio: int,
@@ -110,7 +107,6 @@ class AutobusService:
     ) -> int:
         self.validar_datos(
             placa=placa,
-            id_num_unidad=id_num_unidad,
             id_marca=id_marca,
             id_modelo=id_modelo,
             anio=anio,
@@ -124,12 +120,18 @@ class AutobusService:
         if self.repository.existe_placa(placa):
             raise ValueError("Ya existe un autobús registrado con esa placa.")
 
-        nuevo_id = self.repository.obtener_siguiente_id()
+        nuevo_id_autobus = self.repository.obtener_siguiente_id()
+        nuevo_id_num_unidad, nueva_unidad = self.obtener_siguiente_numero_unidad()
+
+        self.repository.insertar_numero_unidad(
+            id_num_unidad=nuevo_id_num_unidad,
+            unidad=nueva_unidad,
+        )
 
         self.repository.insertar_autobus(
-            id_autobus=nuevo_id,
+            id_autobus=nuevo_id_autobus,
             placa=placa,
-            id_num_unidad=id_num_unidad,
+            id_num_unidad=nuevo_id_num_unidad,
             id_marca=id_marca,
             id_modelo=id_modelo,
             anio=anio,
@@ -138,14 +140,16 @@ class AutobusService:
             id_tipo_autobus=id_tipo_autobus,
         )
 
-        logger.info(f"Autobús creado correctamente. ID={nuevo_id}, Placa={placa}")
-        return nuevo_id
+        logger.info(
+            f"Autobús creado correctamente. ID={nuevo_id_autobus}, "
+            f"Unidad={nueva_unidad}, Placa={placa}"
+        )
+        return nuevo_id_autobus
 
     def actualizar_autobus(
         self,
         id_autobus: int,
         placa: str,
-        id_num_unidad: int,
         id_marca: int,
         id_modelo: int,
         anio: int,
@@ -158,7 +162,6 @@ class AutobusService:
 
         self.validar_datos(
             placa=placa,
-            id_num_unidad=id_num_unidad,
             id_marca=id_marca,
             id_modelo=id_modelo,
             anio=anio,
@@ -179,7 +182,7 @@ class AutobusService:
         self.repository.actualizar_autobus(
             id_autobus=id_autobus,
             placa=placa,
-            id_num_unidad=id_num_unidad,
+            id_num_unidad=autobus_actual.id_num_unidad,
             id_marca=id_marca,
             id_modelo=id_modelo,
             anio=anio,

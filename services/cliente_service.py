@@ -224,7 +224,7 @@ class ClienteService:
         existe = self.repository.db.execute(
             "SELECT 1 FROM RESERVACIONES WHERE id_cliente = ?",
             (id_cliente,),
-            fecht_one=True
+            fetch_one=True
         )
         if existe:
             raise ValueError("No se puede eliminar el cliente porque tiene reservaciones asociadas.")

@@ -54,6 +54,14 @@ class AutobusRepository:
         """
         return self.db.execute(query, (id_autobus,), fetch_one=True)
 
+    def obtener_numero_unidad_por_id(self, id_num_unidad: int):
+        query = """
+        SELECT id_num_unidad, unidad
+        FROM NUMERO_UNIDAD
+        WHERE id_num_unidad = ?;
+        """
+        return self.db.execute(query, (id_num_unidad,), fetch_one=True)
+
     def existe_placa(self, placa: str) -> bool:
         query = """
         SELECT 1
@@ -70,6 +78,21 @@ class AutobusRepository:
         """
         result = self.db.execute(query, fetch_one=True)
         return int(result[0]) if result else 1
+
+    def obtener_siguiente_id_num_unidad(self) -> int:
+        query = """
+        SELECT ISNULL(MAX(id_num_unidad), 0) + 1
+        FROM NUMERO_UNIDAD;
+        """
+        result = self.db.execute(query, fetch_one=True)
+        return int(result[0]) if result else 1
+
+    def insertar_numero_unidad(self, id_num_unidad: int, unidad: str) -> None:
+        query = """
+        INSERT INTO NUMERO_UNIDAD (id_num_unidad, unidad)
+        VALUES (?, ?);
+        """
+        self.db.execute(query, (id_num_unidad, unidad))
 
     def insertar_autobus(
         self,
@@ -154,14 +177,6 @@ class AutobusRepository:
         WHERE id_autobus = ?;
         """
         self.db.execute(query, (id_autobus,))
-
-    def listar_numeros_unidad(self):
-        query = """
-        SELECT id_num_unidad, unidad
-        FROM NUMERO_UNIDAD
-        ORDER BY unidad;
-        """
-        return self.db.execute(query, fetch=True)
 
     def listar_marcas(self):
         query = """

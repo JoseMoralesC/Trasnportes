@@ -37,6 +37,10 @@ class FacturaService:
 
     def obtener_siguiente_id(self) -> int:
         return self.repository.obtener_siguiente_id()
+    
+    def obtener_siguiente_numero_factura(self) -> str:
+        siguiente_id = self.obtener_siguiente_id()
+        return f"FAC-{siguiente_id:04d}"
 
     # =========================================================
     # VALIDACIONES

@@ -11,11 +11,6 @@ logger = get_logger("AutobusesView")
 class AutobusesView(ttk.Frame):
     """
     Vista del módulo de autobuses.
-    Incluye:
-    - formulario
-    - combos de catálogos
-    - tabla de listado
-    - acciones CRUD básicas
     """
 
     def __init__(self, master) -> None:
@@ -23,8 +18,8 @@ class AutobusesView(ttk.Frame):
         self.service = AutobusService()
 
         self.selected_autobus_id: int | None = None
+        self.selected_id_num_unidad: int | None = None
 
-        self.numeros_unidad_map: dict[str, int] = {}
         self.marcas_map: dict[str, int] = {}
         self.modelos_map: dict[str, int] = {}
         self.estados_map: dict[str, int] = {}
@@ -33,6 +28,7 @@ class AutobusesView(ttk.Frame):
         self._build_ui()
         self._load_catalogs()
         self._load_autobuses()
+        self._prepare_next_unit()
 
     # =========================================================
     # UI
@@ -41,9 +37,6 @@ class AutobusesView(ttk.Frame):
         self.grid_rowconfigure(1, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
-        # -----------------------------------------------------
-        # Formulario
-        # -----------------------------------------------------
         form_card = ttk.Frame(self, style="Surface.TFrame", padding=20)
         form_card.grid(row=0, column=0, sticky="ew", pady=(0, 16))
 
@@ -54,14 +47,13 @@ class AutobusesView(ttk.Frame):
             row=0, column=0, columnspan=4, sticky="w", pady=(0, 12)
         )
 
-        # Fila 1
         ttk.Label(form_card, text="Placa").grid(row=1, column=0, sticky="w", padx=(0, 8), pady=6)
         self.entry_placa = ttk.Entry(form_card)
         self.entry_placa.grid(row=2, column=0, sticky="ew", padx=(0, 8), pady=(0, 8))
 
         ttk.Label(form_card, text="Número de unidad").grid(row=1, column=1, sticky="w", padx=8, pady=6)
-        self.combo_num_unidad = ttk.Combobox(form_card, state="readonly")
-        self.combo_num_unidad.grid(row=2, column=1, sticky="ew", padx=8, pady=(0, 8))
+        self.entry_num_unidad = ttk.Entry(form_card, state="readonly")
+        self.entry_num_unidad.grid(row=2, column=1, sticky="ew", padx=8, pady=(0, 8))
 
         ttk.Label(form_card, text="Marca").grid(row=1, column=2, sticky="w", padx=8, pady=6)
         self.combo_marca = ttk.Combobox(form_card, state="readonly")
@@ -71,7 +63,6 @@ class AutobusesView(ttk.Frame):
         self.combo_modelo = ttk.Combobox(form_card, state="readonly")
         self.combo_modelo.grid(row=2, column=3, sticky="ew", padx=(8, 0), pady=(0, 8))
 
-        # Fila 2
         ttk.Label(form_card, text="Año").grid(row=3, column=0, sticky="w", padx=(0, 8), pady=6)
         self.entry_anio = ttk.Entry(form_card)
         self.entry_anio.grid(row=4, column=0, sticky="ew", padx=(0, 8), pady=(0, 8))
@@ -88,7 +79,6 @@ class AutobusesView(ttk.Frame):
         self.combo_tipo = ttk.Combobox(form_card, state="readonly")
         self.combo_tipo.grid(row=4, column=3, sticky="ew", padx=(8, 0), pady=(0, 8))
 
-        # Botonera
         buttons_frame = ttk.Frame(form_card, style="Surface.TFrame")
         buttons_frame.grid(row=5, column=0, columnspan=4, sticky="ew", pady=(8, 0))
 
@@ -107,9 +97,6 @@ class AutobusesView(ttk.Frame):
         self.btn_limpiar = ttk.Button(buttons_frame, text="Limpiar", command=self._clear_form)
         self.btn_limpiar.pack(side="left")
 
-        # -----------------------------------------------------
-        # Tabla
-        # -----------------------------------------------------
         table_card = ttk.Frame(self, style="Surface.TFrame", padding=20)
         table_card.grid(row=1, column=0, sticky="nsew")
 
@@ -153,7 +140,7 @@ class AutobusesView(ttk.Frame):
         self.tree.column("placa", width=100, anchor="center")
         self.tree.column("unidad", width=100, anchor="center")
         self.tree.column("marca", width=120)
-        self.tree.column("modelo", width=100, anchor="center")
+        self.tree.column("modelo", width=130, anchor="center")
         self.tree.column("anio", width=80, anchor="center")
         self.tree.column("capacidad", width=90, anchor="center")
         self.tree.column("estado", width=110, anchor="center")
@@ -166,29 +153,16 @@ class AutobusesView(ttk.Frame):
     # =========================================================
     def _load_catalogs(self) -> None:
         try:
-            numeros = self.service.listar_numeros_unidad()
             marcas = self.service.listar_marcas()
             modelos = self.service.listar_modelos()
             estados = self.service.listar_estados()
             tipos = self.service.listar_tipos_autobus()
 
-            self.numeros_unidad_map = {
-                row.unidad: row.id_num_unidad for row in numeros
-            }
-            self.marcas_map = {
-                row.marca: row.id_marca for row in marcas
-            }
-            self.modelos_map = {
-                str(row.modelo): row.id_modelo for row in modelos
-            }
-            self.estados_map = {
-                row.estado: row.id_estado for row in estados
-            }
-            self.tipos_map = {
-                row.nombre_tipo: row.id_tipo_autobus for row in tipos
-            }
+            self.marcas_map = {row.marca: row.id_marca for row in marcas}
+            self.modelos_map = {str(row.modelo): row.id_modelo for row in modelos}
+            self.estados_map = {row.estado: row.id_estado for row in estados}
+            self.tipos_map = {row.nombre_tipo: row.id_tipo_autobus for row in tipos}
 
-            self.combo_num_unidad["values"] = list(self.numeros_unidad_map.keys())
             self.combo_marca["values"] = list(self.marcas_map.keys())
             self.combo_modelo["values"] = list(self.modelos_map.keys())
             self.combo_estado["values"] = list(self.estados_map.keys())
@@ -235,28 +209,16 @@ class AutobusesView(ttk.Frame):
 
     def _on_guardar(self) -> None:
         try:
-            id_num_unidad = self._get_selected_id(
-                self.combo_num_unidad, self.numeros_unidad_map, "número de unidad"
-            )
-            id_marca = self._get_selected_id(
-                self.combo_marca, self.marcas_map, "marca"
-            )
-            id_modelo = self._get_selected_id(
-                self.combo_modelo, self.modelos_map, "modelo"
-            )
-            id_estado = self._get_selected_id(
-                self.combo_estado, self.estados_map, "estado"
-            )
-            id_tipo = self._get_selected_id(
-                self.combo_tipo, self.tipos_map, "tipo de autobús"
-            )
+            id_marca = self._get_selected_id(self.combo_marca, self.marcas_map, "marca")
+            id_modelo = self._get_selected_id(self.combo_modelo, self.modelos_map, "modelo")
+            id_estado = self._get_selected_id(self.combo_estado, self.estados_map, "estado")
+            id_tipo = self._get_selected_id(self.combo_tipo, self.tipos_map, "tipo de autobús")
 
             anio = int(self.entry_anio.get().strip())
             capacidad = int(self.entry_capacidad.get().strip())
 
             nuevo_id = self.service.crear_autobus(
                 placa=self.entry_placa.get(),
-                id_num_unidad=id_num_unidad,
                 id_marca=id_marca,
                 id_modelo=id_modelo,
                 anio=anio,
@@ -284,21 +246,10 @@ class AutobusesView(ttk.Frame):
             if self.selected_autobus_id is None:
                 raise ValueError("Debe seleccionar un autobús para actualizar.")
 
-            id_num_unidad = self._get_selected_id(
-                self.combo_num_unidad, self.numeros_unidad_map, "número de unidad"
-            )
-            id_marca = self._get_selected_id(
-                self.combo_marca, self.marcas_map, "marca"
-            )
-            id_modelo = self._get_selected_id(
-                self.combo_modelo, self.modelos_map, "modelo"
-            )
-            id_estado = self._get_selected_id(
-                self.combo_estado, self.estados_map, "estado"
-            )
-            id_tipo = self._get_selected_id(
-                self.combo_tipo, self.tipos_map, "tipo de autobús"
-            )
+            id_marca = self._get_selected_id(self.combo_marca, self.marcas_map, "marca")
+            id_modelo = self._get_selected_id(self.combo_modelo, self.modelos_map, "modelo")
+            id_estado = self._get_selected_id(self.combo_estado, self.estados_map, "estado")
+            id_tipo = self._get_selected_id(self.combo_tipo, self.tipos_map, "tipo de autobús")
 
             anio = int(self.entry_anio.get().strip())
             capacidad = int(self.entry_capacidad.get().strip())
@@ -306,7 +257,6 @@ class AutobusesView(ttk.Frame):
             self.service.actualizar_autobus(
                 id_autobus=self.selected_autobus_id,
                 placa=self.entry_placa.get(),
-                id_num_unidad=id_num_unidad,
                 id_marca=id_marca,
                 id_modelo=id_modelo,
                 anio=anio,
@@ -367,6 +317,7 @@ class AutobusesView(ttk.Frame):
                 return
 
             self.selected_autobus_id = autobus.id_autobus
+            self.selected_id_num_unidad = autobus.id_num_unidad
 
             self.entry_placa.delete(0, tk.END)
             self.entry_placa.insert(0, autobus.placa)
@@ -377,7 +328,9 @@ class AutobusesView(ttk.Frame):
             self.entry_capacidad.delete(0, tk.END)
             self.entry_capacidad.insert(0, str(autobus.capacidad))
 
-            self._set_combo_by_id(self.combo_num_unidad, self.numeros_unidad_map, autobus.id_num_unidad)
+            unidad_row = self.service.repository.obtener_numero_unidad_por_id(autobus.id_num_unidad)
+            self._set_readonly_entry(self.entry_num_unidad, unidad_row.unidad if unidad_row else "")
+
             self._set_combo_by_id(self.combo_marca, self.marcas_map, autobus.id_marca)
             self._set_combo_by_id(self.combo_modelo, self.modelos_map, autobus.id_modelo)
             self._set_combo_by_id(self.combo_estado, self.estados_map, autobus.id_estado)
@@ -390,18 +343,30 @@ class AutobusesView(ttk.Frame):
     # =========================================================
     # HELPERS
     # =========================================================
+    def _prepare_next_unit(self) -> None:
+        _, unidad = self.service.obtener_siguiente_numero_unidad()
+        self._set_readonly_entry(self.entry_num_unidad, unidad)
+
+    def _set_readonly_entry(self, entry: ttk.Entry, value: str) -> None:
+        entry.config(state="normal")
+        entry.delete(0, tk.END)
+        entry.insert(0, value)
+        entry.config(state="readonly")
+
     def _clear_form(self) -> None:
         self.selected_autobus_id = None
+        self.selected_id_num_unidad = None
 
         self.entry_placa.delete(0, tk.END)
         self.entry_anio.delete(0, tk.END)
         self.entry_capacidad.delete(0, tk.END)
 
-        self.combo_num_unidad.set("")
         self.combo_marca.set("")
         self.combo_modelo.set("")
         self.combo_estado.set("")
         self.combo_tipo.set("")
+
+        self._prepare_next_unit()
 
         for item in self.tree.selection():
             self.tree.selection_remove(item)

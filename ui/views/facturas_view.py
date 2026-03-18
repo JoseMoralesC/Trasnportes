@@ -1,5 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+from datetime import date
+from tkcalendar import DateEntry
 
 from core.logger import get_logger
 from services.factura_service import FacturaService
@@ -32,6 +34,7 @@ class FacturasView(ttk.Frame):
         self._build_ui()
         self._load_catalogs()
         self._load_facturas()
+        self._clear_form()
 
     # =========================================================
     # UI
@@ -60,13 +63,17 @@ class FacturasView(ttk.Frame):
         self.combo_reservacion.bind("<<ComboboxSelected>>", self._on_recalcular_total)
 
         ttk.Label(form_card, text="Número factura").grid(row=1, column=1, sticky="w", padx=8, pady=6)
-        self.entry_numero_factura = ttk.Entry(form_card)
+        self.entry_numero_factura = ttk.Entry(form_card, state="readonly")
         self.entry_numero_factura.grid(row=2, column=1, sticky="ew", padx=8, pady=(0, 8))
 
-        ttk.Label(form_card, text="Fecha factura (YYYY-MM-DD)").grid(
+        ttk.Label(form_card, text="Fecha factura").grid(
             row=1, column=2, sticky="w", padx=8, pady=6
         )
-        self.entry_fecha_factura = ttk.Entry(form_card)
+        self.entry_fecha_factura = DateEntry(
+            form_card,
+            date_pattern="yyyy-mm-dd",
+            state="readonly"
+        )
         self.entry_fecha_factura.grid(row=2, column=2, sticky="ew", padx=8, pady=(0, 8))
 
         ttk.Label(form_card, text="Descuento (opcional)").grid(
@@ -338,11 +345,8 @@ class FacturasView(ttk.Frame):
 
             self.selected_factura_id = factura.id_factura
 
-            self.entry_numero_factura.delete(0, tk.END)
-            self.entry_numero_factura.insert(0, factura.numero_factura)
-
-            self.entry_fecha_factura.delete(0, tk.END)
-            self.entry_fecha_factura.insert(0, str(factura.fecha_factura))
+            self._set_readonly_entry(self.entry_numero_factura, factura.numero_factura)
+            self.entry_fecha_factura.set_date(str(factura.fecha_factura))
 
             self._set_combo_by_id(self.combo_reservacion, self.reservaciones_map, factura.id_reservacion)
             self._set_combo_by_id(self.combo_estado, self.estados_map, factura.id_estado)
@@ -406,8 +410,8 @@ class FacturasView(ttk.Frame):
         self.combo_descuento.set("")
         self.combo_estado.set("")
 
-        self.entry_numero_factura.delete(0, tk.END)
-        self.entry_fecha_factura.delete(0, tk.END)
+        self._cargar_siguiente_numero_factura()
+        self.entry_fecha_factura.set_date(date.today())
 
         self._set_readonly_entry(self.entry_subtotal, "")
         self._set_readonly_entry(self.entry_impuesto, "")
@@ -440,3 +444,11 @@ class FacturasView(ttk.Frame):
                 combo.set(text)
                 return
         combo.set("")
+
+    def _cargar_siguiente_numero_factura(self) -> None:
+        try:
+            numero = self.service.obtener_siguiente_numero_factura()
+            self._set_readonly_entry(self.entry_numero_factura, numero)
+        except Exception as e:
+            logger.error(f"Error al cargar siguiente número de factura: {e}")
+            self._set_readonly_entry(self.entry_numero_factura, "")    

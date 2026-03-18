@@ -1,0 +1,105 @@
+# ============================================
+# PYTHON
+# ============================================
+
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Entornos virtuales
+venv/
+env/
+.venv/
+
+# Archivos de instalación
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ============================================
+# VARIABLES DE ENTORNO / CONFIG SENSIBLE
+# ============================================
+
+.env
+.env.*
+config/.env
+
+# (opcional si manejas credenciales en settings)
+config/secrets.py
+
+# ============================================
+# LOGS
+# ============================================
+
+logs/
+*.log
+
+# ============================================
+# BASES DE DATOS LOCALES (por si acaso)
+# ============================================
+
+*.db
+*.sqlite3
+
+# ============================================
+# ARCHIVOS TEMPORALES / SISTEMA
+# ============================================
+
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Mac
+.DS_Store
+
+# ============================================
+# IDEs / EDITORES
+# ============================================
+
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+
+# ============================================
+# BUILD / DISTRIBUCIÓN
+# ============================================
+
+build/
+dist/
+*.egg-info/
+*.egg
+
+# ============================================
+# TEST / CACHE
+# ============================================
+
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ============================================
+# JUPYTER (por si usas)
+# ============================================
+
+.ipynb_checkpoints/
+
+# ============================================
+# ARCHIVOS PERSONALES / BACKUPS
+# ============================================
+
+*.bak
+*.backup
+*.old
+
+# ============================================
+# SQL (opcional)
+# ============================================
+
+# Si NO quieres subir scripts, descomenta:
+# sql/*.sql

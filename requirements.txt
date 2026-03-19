@@ -1,1 +1,14 @@
-install tkcalendar.
+##  Ejecución del Proyecto
+
+1. Instalar dependencias:
+
+
+pip install 
+
+2. Configurar conexión en:
+
+config/database.py
+
+.Ejecutar la aplicación:
+
+python app.py

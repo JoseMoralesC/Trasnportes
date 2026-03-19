@@ -4,17 +4,17 @@
    SQL Server / SSMS
    ========================================================= */
 
-IF DB_ID('Proyecto1_Transportes') IS NOT NULL
+IF DB_ID('Proyecto1_Transportes_SA') IS NOT NULL
 BEGIN
-    ALTER DATABASE Proyecto1_Transportes SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-    DROP DATABASE Proyecto1_Transportes;
+    ALTER DATABASE Proyecto1_Transportes_SA SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE Proyecto1_Transportes_SA;
 END;
 GO
 
-CREATE DATABASE Proyecto1_Transportes;
+CREATE DATABASE Proyecto1_Transportes_SA;
 GO
 
-USE Proyecto1_Transportes;
+USE Proyecto1_Transportes_SA;
 GO
 
 /* =========================================================

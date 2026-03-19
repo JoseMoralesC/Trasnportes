@@ -1,0 +1,5 @@
+Orden recomendado de ejecucion en SSMS:
+1) 01_db_completa.sql
+2) 03_ajustes_checks_indices.sql
+3) 02_datos_prueba_v2.sql
+4) 04_consultas_verificacion.sql

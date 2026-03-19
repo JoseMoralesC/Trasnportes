@@ -1,0 +1,185 @@
+USE Proyecto1_Transportes_SA;
+GO
+
+/* =========================================================
+   Ajustes de estructura, CHECKS e indices
+   ========================================================= */
+
+ALTER TABLE MODELO_UNIDAD
+ALTER COLUMN modelo VARCHAR(50) NOT NULL;
+GO
+
+/* CHECKS */
+ALTER TABLE RANGOS_SALARIALES
+ADD CONSTRAINT CHK_RANGOS_SALARIALES_MIN_MAX
+CHECK (salario_min >= 0 AND salario_max >= salario_min);
+GO
+
+ALTER TABLE CLIENTES
+ADD CONSTRAINT CHK_CLIENTES_CEDULA
+CHECK (cedula LIKE '[1-9]-[0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]'),
+    CONSTRAINT CHK_CLIENTES_TELEFONO
+CHECK (telefono LIKE '[2-8][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]');
+GO
+
+ALTER TABLE EMPLEADOS
+ADD CONSTRAINT CHK_EMPLEADOS_CEDULA
+CHECK (cedula LIKE '[1-9]-[0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]'),
+    CONSTRAINT CHK_EMPLEADOS_TELEFONO
+CHECK (telefono LIKE '[2-8][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]');
+GO
+
+ALTER TABLE RUTAS
+ADD CONSTRAINT CHK_RUTAS_DISTANCIA
+CHECK (distancia_km > 0);
+GO
+
+ALTER TABLE PRECIO_BASE
+ADD CONSTRAINT CHK_PRECIO_BASE_MONTO
+CHECK (precio_base > 0);
+GO
+
+ALTER TABLE TIPOS_AUTOBUS
+ADD CONSTRAINT CHK_TIPOS_AUTOBUS_CAPACIDAD
+CHECK (capacidad_pasajeros > 0);
+GO
+
+ALTER TABLE AUTOBUSES
+ADD CONSTRAINT CHK_AUTOBUSES_ANIO
+CHECK (anio BETWEEN 1990 AND 2035),
+    CONSTRAINT CHK_AUTOBUSES_CAPACIDAD
+CHECK (capacidad > 0);
+GO
+
+ALTER TABLE DEKRAS
+ADD CONSTRAINT CHK_DEKRAS_FECHAS
+CHECK (fecha_vencimiento > fecha_emision);
+GO
+
+ALTER TABLE MARCHAMOS
+ADD CONSTRAINT CHK_MARCHAMOS_FECHAS
+CHECK (fecha_vencimiento >= fecha_pago);
+GO
+
+ALTER TABLE MANTENIMIENTOS_AUTOBUS
+ADD CONSTRAINT CHK_MANTENIMIENTOS_AUTOBUS_COSTO
+CHECK (costo >= 0);
+GO
+
+ALTER TABLE VIAJES
+ADD CONSTRAINT CHK_VIAJES_CUPO_TOTAL
+CHECK (cupo_total > 0);
+GO
+
+ALTER TABLE RESERVACIONES
+ADD CONSTRAINT CHK_RESERVACIONES_CANTIDAD
+CHECK (cantidad_pasajeros > 0),
+    CONSTRAINT CHK_RESERVACIONES_MONTOS
+CHECK (subtotal >= 0 AND impuestos >= 0 AND total >= subtotal);
+GO
+
+ALTER TABLE FACTURAS
+ADD CONSTRAINT CHK_FACTURAS_MONTOS
+CHECK (subtotal >= 0 AND impuesto >= 0 AND total >= 0);
+GO
+
+ALTER TABLE PAGOS
+ADD CONSTRAINT CHK_PAGOS_MONTO
+CHECK (monto_pagado > 0);
+GO
+
+/* INDICES */
+CREATE INDEX IX_CLIENTES_ID_PROFESION ON CLIENTES(id_profesion);
+CREATE INDEX IX_CLIENTES_ID_EMPRESA ON CLIENTES(id_empresa);
+CREATE INDEX IX_CLIENTES_ID_RANGO_SALARIAL ON CLIENTES(id_rango_salarial);
+
+CREATE INDEX IX_EMPLEADOS_ID_ROL ON EMPLEADOS(id_rol);
+CREATE INDEX IX_EMPLEADOS_ID_LICENCIA ON EMPLEADOS(id_licencia);
+
+CREATE INDEX IX_RUTAS_ID_ZONA ON RUTAS(id_zona);
+
+CREATE INDEX IX_AUTOBUSES_ID_NUM_UNIDAD ON AUTOBUSES(id_num_unidad);
+CREATE INDEX IX_AUTOBUSES_ID_MARCA ON AUTOBUSES(id_marca);
+CREATE INDEX IX_AUTOBUSES_ID_MODELO ON AUTOBUSES(id_modelo);
+CREATE INDEX IX_AUTOBUSES_ID_ESTADO ON AUTOBUSES(id_estado);
+CREATE INDEX IX_AUTOBUSES_ID_TIPO_AUTOBUS ON AUTOBUSES(id_tipo_autobus);
+
+CREATE INDEX IX_DEKRAS_ID_AUTOBUS ON DEKRAS(id_autobus);
+CREATE INDEX IX_DEKRAS_ID_ESTADO ON DEKRAS(id_estado);
+
+CREATE INDEX IX_MARCHAMOS_ID_AUTOBUS ON MARCHAMOS(id_autobus);
+CREATE INDEX IX_MARCHAMOS_ID_ESTADO ON MARCHAMOS(id_estado);
+
+CREATE INDEX IX_MANTENIMIENTOS_AUTOBUS_ID_AUTOBUS ON MANTENIMIENTOS_AUTOBUS(id_autobus);
+
+CREATE INDEX IX_VIAJES_ID_RUTA ON VIAJES(id_ruta);
+CREATE INDEX IX_VIAJES_ID_AUTOBUS ON VIAJES(id_autobus);
+CREATE INDEX IX_VIAJES_ID_PRECIO ON VIAJES(id_precio);
+CREATE INDEX IX_VIAJES_ID_ESTADO ON VIAJES(id_estado);
+
+CREATE INDEX IX_VIAJE_PERSONAL_ID_VIAJE ON VIAJE_PERSONAL(id_viaje);
+CREATE INDEX IX_VIAJE_PERSONAL_ID_EMPLEADO ON VIAJE_PERSONAL(id_empleado);
+
+CREATE INDEX IX_RESERVACIONES_ID_CLIENTE ON RESERVACIONES(id_cliente);
+CREATE INDEX IX_RESERVACIONES_ID_VIAJE ON RESERVACIONES(id_viaje);
+CREATE INDEX IX_RESERVACIONES_ID_ADMINISTRATIVO ON RESERVACIONES(id_administrativo);
+CREATE INDEX IX_RESERVACIONES_ID_ESTADO ON RESERVACIONES(id_estado);
+
+CREATE INDEX IX_DETALLE_RESERVACION_ID_RESERVACION ON DETALLE_RESERVACION(id_reservacion);
+
+CREATE INDEX IX_FACTURAS_ID_DESCUENTO ON FACTURAS(id_descuento);
+CREATE INDEX IX_FACTURAS_ID_ESTADO ON FACTURAS(id_estado);
+
+CREATE INDEX IX_PAGOS_ID_FACTURA ON PAGOS(id_factura);
+CREATE INDEX IX_PAGOS_ID_METODO_PAGO ON PAGOS(id_metodo_pago);
+CREATE INDEX IX_PAGOS_ID_ESTADO ON PAGOS(id_estado);
+
+CREATE INDEX IX_BITACORA_ID_EMPLEADO ON BITACORA(id_empleado);
+
+/* =========================================================
+   Integración de DEKRAS y MARCHAMOS con flujo de AUTOBUSES
+   Ajustes para consultas, integridad y operación en app
+   ========================================================= */
+
+/* -----------------------------------------
+   CHECK adicional para MARCHAMOS
+   - El periodo debe verse como año: 2026
+   ----------------------------------------- */
+ALTER TABLE MARCHAMOS
+ADD CONSTRAINT CHK_MARCHAMOS_PERIODO_ANIO
+CHECK (periodo LIKE '[1-2][0-9][0-9][0-9]');
+GO
+
+/* -----------------------------------------
+   Un autobús no debería tener dos marchamos
+   para el mismo periodo
+   ----------------------------------------- */
+CREATE UNIQUE INDEX UX_MARCHAMOS_AUTOBUS_PERIODO
+ON MARCHAMOS(id_autobus, periodo);
+GO
+
+/* -----------------------------------------
+   Índices orientados a consultas reales
+   para traer el documento más reciente
+   ----------------------------------------- */
+CREATE INDEX IX_DEKRAS_AUTOBUS_VENCIMIENTO
+ON DEKRAS(id_autobus, fecha_vencimiento DESC);
+GO
+
+CREATE INDEX IX_MARCHAMOS_AUTOBUS_VENCIMIENTO
+ON MARCHAMOS(id_autobus, fecha_vencimiento DESC);
+GO
+
+/* -----------------------------------------
+   Índices compuestos útiles para filtros
+   por estado + autobús
+   ----------------------------------------- */
+CREATE INDEX IX_DEKRAS_AUTOBUS_ESTADO_VENCIMIENTO
+ON DEKRAS(id_autobus, id_estado, fecha_vencimiento DESC);
+GO
+
+CREATE INDEX IX_MARCHAMOS_AUTOBUS_ESTADO_VENCIMIENTO
+ON MARCHAMOS(id_autobus, id_estado, fecha_vencimiento DESC);
+GO
+
+GO

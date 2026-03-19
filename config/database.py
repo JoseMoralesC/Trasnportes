@@ -14,7 +14,7 @@ DEFAULT_DB_CONFIG: Dict[str, Any] = {
     "mode": "sql",  # "sql" o "windows"
     "driver": "ODBC Driver 17 for SQL Server",
     "server": r"localhost\SQLEXPRESS",
-    "database": "Proyecto1_Transportes",
+    "database": "Proyecto1_Transportes_SA",
     "username": "",
     "password": "",
     "trusted_connection": "yes",

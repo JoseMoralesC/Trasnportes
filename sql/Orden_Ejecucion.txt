@@ -3,3 +3,7 @@ Orden recomendado de ejecucion en SSMS:
 2) 03_ajustes_checks_indices.sql
 3) 02_datos_prueba_v2.sql
 4) 04_consultas_verificacion.sql
+5) triggers.sql
+6) funciones.sql
+7) sp.sql
+8) views.sql
